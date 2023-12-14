@@ -1,12 +1,35 @@
+import time
+import subprocess
 import pyaudio
+import Adafruit_GPIO.SPI as SPI
+import Adafruit_SSD1306
 from rev_ai.models import MediaConfig
 from rev_ai.streamingclient import RevAiStreamingClient
 from six.moves import queue
 import json
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
 
-# Replace 'YOUR_ACCESS_TOKEN' with your actual Rev.ai access token
-access_token = "02TAiLcp-j1gkC-5waYgDkzPXvv3IYhQ4D7gO2v2CFlQtMoMl4bkPsw7WFWxr3fT_3GoCVLmD-PF4ln4GoRPrBxvF5rNU"
+# Rev.ai access token
+access_token = "YOUR_ACCESS_TOKEN"
 
+# OLED display setup
+RST = None
+DC = 23
+SPI_PORT = 0
+SPI_DEVICE = 0
+disp = Adafruit_SSD1306.SSD1306_128_32(rst=RST)
+disp.begin()
+disp.clear()
+disp.display()
+width = disp.width
+height = disp.height
+image = Image.new('1', (width, height))
+draw = ImageDraw.Draw(image)
+font = ImageFont.load_default()
+
+# Microphone stream class
 class MicrophoneStream(object):
     def __init__(self, rate, chunk):
         self._rate = rate
@@ -52,33 +75,20 @@ class MicrophoneStream(object):
                     break
             yield b''.join(data)
 
-def censor_print(text):
-    # List of profane words (add more as needed)
-    profane_words = ["fuck", "motherfucker", "bitch", "bitchass","bitchassnigga","nigga"]
+# Function to display text on OLED
+def display_on_oled(text):
+    draw.rectangle((0, 0, width, height), outline=0, fill=0)
+    draw.text((0, 0), text, font=font, fill=255)
+    disp.image(image)
+    disp.display()
 
-    # Split the text into words
-    words = text.split()
-
-    # Iterate through each word
-    for i in range(len(words)):
-        # Check if the word is in the profane words list
-        if words[i].lower() in profane_words:
-            # Replace the word with asterisks
-            words[i] = '*'
-
-    # Join the words back into a string
-    censored_text = ' '.join(words)
-    
-    # Print the censored text
-    print(censored_text)
-
-
-# Configurations
+# Rev.ai streaming client setup
 rate = 44100
 chunk = int(rate / 10)
-example_mc = MediaConfig('audio/x-raw', 'interleaved', 44100, 'S16LE', 1)
-streamclient = RevAiStreamingClient(access_token, example_mc)
+mc = MediaConfig('audio/x-raw', 'interleaved', rate, 'S16LE', 1)
+streamclient = RevAiStreamingClient(access_token, mc)
 
+# Main execution
 with MicrophoneStream(rate, chunk) as stream:
     try:
         response_gen = streamclient.start(stream.generator())
@@ -90,10 +100,7 @@ with MicrophoneStream(rate, chunk) as stream:
                 elements = response_json['elements']
                 transcript = ' '.join(elem['value'] for elem in elements if elem['type'] == 'text')
                 full_transcript += transcript
-                print(transcript)  # Print each chunk of transcription
-
-        censor_print(full_transcript)
+                display_on_oled(transcript)  # Display text on OLED
 
     except KeyboardInterrupt:
         streamclient.end()
-        pass
