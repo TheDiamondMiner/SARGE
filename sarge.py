@@ -55,7 +55,7 @@ def display_console_text(text):
     time.sleep(2)  # Adjust the display duration as needed
 
 # Rev.ai access token
-access_token = "YOUR_ACCESS_TOKEN"
+access_token = "02Xw3PNnMTiXAe5VENUQKJj3c5RVMMtap8iD8HhzLl0NzjOItgwr4UKTC96h0DFq6uLXSLqhAL0HUMvemhmbukGe6OnAQ"
 
 # Microphone stream class
 class MicrophoneStream(object):
