@@ -1,12 +1,10 @@
 import pyaudio
-import json
-import time
-from PIL import Image, ImageDraw, ImageFont
-import adafruit_ssd1306
 from rev_ai.models import MediaConfig
 from rev_ai.streamingclient import RevAiStreamingClient
 from six.moves import queue
+import json
 
+# Replace 'YOUR_ACCESS_TOKEN' with your actual Rev.ai access token
 access_token = "02TAiLcp-j1gkC-5waYgDkzPXvv3IYhQ4D7gO2v2CFlQtMoMl4bkPsw7WFWxr3fT_3GoCVLmD-PF4ln4GoRPrBxvF5rNU"
 
 class MicrophoneStream(object):
@@ -54,30 +52,28 @@ class MicrophoneStream(object):
                     break
             yield b''.join(data)
 
-def display_text_oled(text):
-    lines = text.split('\n')
-    y = 0
-    for line in lines:
-        oled.fill(0)
-        with Image.new("1", (WIDTH, HEIGHT)) as img:
-            draw = ImageDraw.Draw(img)
-            draw.text((0, y), line, font=font, fill=255)
-            oled.image(img)
-            oled.show()
-            time.sleep(2)
-            y += 10
-
 def censor_print(text):
-    profane_words = ["fuck", "motherfucker", "bitch", "bitchass","bitchassnigga","nigga"] #Bad Words, Please ignore.
+    # List of profane words (add more as needed)
+    profane_words = ["fuck", "motherfucker", "bitch", "bitchass","bitchassnigga","nigga"]
+
+    # Split the text into words
     words = text.split()
 
+    # Iterate through each word
     for i in range(len(words)):
+        # Check if the word is in the profane words list
         if words[i].lower() in profane_words:
+            # Replace the word with asterisks
             words[i] = '*'
 
+    # Join the words back into a string
     censored_text = ' '.join(words)
-    display_text_oled(censored_text)
+    
+    # Print the censored text
+    print(censored_text)
 
+
+# Configurations
 rate = 44100
 chunk = int(rate / 10)
 example_mc = MediaConfig('audio/x-raw', 'interleaved', 44100, 'S16LE', 1)
@@ -90,10 +86,11 @@ with MicrophoneStream(rate, chunk) as stream:
 
         for response in response_gen:
             response_json = json.loads(response)
-            if response_json['type'] in ('final'):
+            if response_json['type'] in ('final','partial'):
                 elements = response_json['elements']
                 transcript = ' '.join(elem['value'] for elem in elements if elem['type'] == 'text')
                 full_transcript += transcript
+                print(transcript)  # Print each chunk of transcription
 
         censor_print(full_transcript)
 
