@@ -31,24 +31,40 @@ font = ImageFont.load_default()
 
 def display_text(text):
     max_chars = 21  # Maximum characters in a line
-    lines = [text[i:i + max_chars] for i in range(0, len(text), max_chars)]
     line_height = 8  # Height of a line
     max_lines = height // line_height  # Maximum lines that can fit on the display
 
-    for i in range(0, len(lines), max_lines):
-        draw.rectangle((0, 0, width, height), outline=0, fill=0)  # Clear the display
+    lines = text.split("\n")  # Split text into lines if there are newline characters
 
-        for j in range(max_lines):
-            if i + j < len(lines):
-                y = j * line_height  # Calculate y-coordinate for the current line
-                draw.text((0, y), lines[i + j], font=font, fill=255)
+    current_line = ""  # Initialize an empty line to add text
+    for line in lines:
+        words = line.split()
+        for word in words:
+            if draw.textsize(current_line + " " + word, font=font)[0] <= width:
+                current_line += word + " "
+            else:
+                # Display the current line and move to the next line
+                draw.text((0, len(lines) * line_height), current_line, font=font, fill=255)
+                disp.image(image)
+                disp.display()
+                time.sleep(2)  # Wait for 2 seconds before updating the display
 
+                current_line = word + " "
+
+                # If the maximum number of lines is reached, clear the display and reset the lines count
+                if len(lines) >= max_lines:
+                    draw.rectangle((0, 0, width, height), outline=0, fill=0)
+                    disp.image(image)
+                    disp.display()
+                    time.sleep(2)
+                    current_line = ""
+
+    # Display the last line if there's any remaining text
+    if current_line != "":
+        draw.text((0, len(lines) * line_height), current_line, font=font, fill=255)
         disp.image(image)
         disp.display()
-        time.sleep(2)  # Wait for 2 seconds before updating the display
-
-    disp.image(image)
-    disp.display()
+        time.sleep(2)
 
 
 # Microphone stream class
