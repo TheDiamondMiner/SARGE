@@ -31,12 +31,12 @@ font = ImageFont.load_default()
 
 def display_text(text):
     max_chars = 21  # Maximum characters in a line
-    lines = [text[i:i+max_chars] for i in range(0, len(text), max_chars)]
+    lines = [text[i:i + max_chars] for i in range(0, len(text), max_chars)]
     line_height = 8  # Height of a line
     max_lines = height // line_height  # Maximum lines that can fit on the display
 
     for i in range(0, len(lines), max_lines):
-        draw.rectangle((0,0,width,height), outline=0, fill=0)  # Clear the display
+        draw.rectangle((0, 0, width, height), outline=0, fill=0)  # Clear the display
 
         for j in range(max_lines):
             if i + j < len(lines):
@@ -49,7 +49,6 @@ def display_text(text):
 
     disp.image(image)
     disp.display()
-
 
 
 # Microphone stream class
