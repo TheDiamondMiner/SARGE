@@ -1,64 +1,36 @@
-import time
-import subprocess
 import pyaudio
-import Adafruit_GPIO.SPI as SPI
-import Adafruit_SSD1306
 from rev_ai.models import MediaConfig
 from rev_ai.streamingclient import RevAiStreamingClient
 from six.moves import queue
 import json
-from PIL import Image
-from PIL import ImageDraw
+from luma.core.interface.serial import i2c
+from luma.oled.device import ssd1306
+from luma.core.virtual import viewport
+from luma.core.render import canvas
 from PIL import ImageFont
+import time
+
+# Replace 'YOUR_ACCESS_TOKEN' with your actual Rev.ai access token
+access_token = "02TAiLcp-j1gkC-5waYgDkzPXvv3IYhQ4D7gO2v2CFlQtMoMl4bkPsw7WFWxr3fT_3GoCVLmD-PF4ln4GoRPrBxvF5rNU"
 
 # OLED display setup
-RST = None
-DC = 23
-SPI_PORT = 0
-SPI_DEVICE = 0
-disp = Adafruit_SSD1306.SSD1306_128_32(rst=RST)
-disp.begin()
-disp.clear()
-disp.display()
-width = disp.width
-height = disp.height
-image = Image.new('1', (width, height))
-draw = ImageDraw.Draw(image)
-font = ImageFont.load_default()
+serial = i2c(port=1, address=0x3C)
+device = ssd1306(serial)
+virtual = viewport(device, width=device.width, height=device.height)
 
-def display_console_text(text):
-    line_height = 8  # Height of a line
-    max_lines = height // line_height  # Maximum lines that can fit on the display
+def display_text_on_oled(text):
+    with canvas(virtual) as draw:
+        font = ImageFont.load_default()
+        lines = virtual.text(text, (0, 0), font=font, fill="white")
 
-    words = text.split()
-    lines = ['']
-    line_index = 0
-
-    for word in words:
-        # Check if adding the word exceeds the display width
-        if draw.textsize(lines[line_index] + " " + word, font=font)[0] <= width:
-            lines[line_index] += word + " "
+        # Scroll text if it's longer than the display height
+        if lines > device.height:
+            for i in range(lines - device.height):
+                virtual.set_position((0, -i))
+                time.sleep(0.1)  # Adjust scroll speed as needed
         else:
-            lines.append(word + " ")
-            line_index += 1
+            time.sleep(5)  # Display for 5 seconds if it fits entirely
 
-    # Display the text on the OLED
-    for idx, line in enumerate(lines):
-        # Scroll up if the number of lines exceeds the display's capacity
-        if idx >= max_lines:
-            for i in range(1, max_lines):
-                draw.text((0, (i - 1) * line_height), lines[idx - max_lines + i], font=font, fill=255)
-        else:
-            draw.text((0, idx * line_height), line, font=font, fill=255)
-
-    disp.image(image)
-    disp.display()
-    time.sleep(2)  # Adjust the display duration as needed
-
-# Rev.ai access token
-access_token = "02Xw3PNnMTiXAe5VENUQKJj3c5RVMMtap8iD8HhzLl0NzjOItgwr4UKTC96h0DFq6uLXSLqhAL0HUMvemhmbukGe6OnAQ"
-
-# Microphone stream class
 class MicrophoneStream(object):
     def __init__(self, rate, chunk):
         self._rate = rate
@@ -104,29 +76,24 @@ class MicrophoneStream(object):
                     break
             yield b''.join(data)
 
-
-# Rev.ai streaming client setup and main execution
+# Configurations
 rate = 44100
 chunk = int(rate / 10)
-mc = MediaConfig('audio/x-raw', 'interleaved', rate, 'S16LE', 1)
-streamclient = RevAiStreamingClient(access_token, mc)
+example_mc = MediaConfig('audio/x-raw', 'interleaved', 44100, 'S16LE', 1)
+streamclient = RevAiStreamingClient(access_token, example_mc)
 
-try:
-    response_gen = streamclient.start(stream.generator())
-    full_transcript = ''
+with MicrophoneStream(rate, chunk) as stream:
+    try:
+        response_gen = streamclient.start(stream.generator())
+        full_transcript = ''
 
-    for response in response_gen:
-        response_json = json.loads(response)
-        if response_json['type'] in ('final', 'partial'):
-            elements = response_json['elements']
-            transcript = ' '.join(elem['value'] for elem in elements if elem['type'] == 'text')
-            full_transcript += transcript
-            display_console_text(transcript)  # Display text on OLED
+        for response in response_gen:
+            response_json = json.loads(response)
+            if response_json['type'] in ('final', 'partial'):
+                elements = response_json['elements']
+                transcript = ' '.join(elem['value'] for elem in elements if elem['type'] == 'text')
+                full_transcript += transcript
+                display_text_on_oled(transcript)  # Display text on OLED
 
-    # Clear the display after all lines are shown
-    draw.rectangle((0, 0, width, height), outline=0, fill=0)
-    disp.image(image)
-    disp.display()
-
-except KeyboardInterrupt:
-    streamclient.end()
+    except KeyboardInterrupt:
+        streamclient.end()
