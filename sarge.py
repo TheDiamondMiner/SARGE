@@ -80,30 +80,32 @@ class MicrophoneStream(object):
 def display_on_oled(text):
     global disp, draw, image, width, height, font
     
-    # Clear the display
-    draw.rectangle((0, 0, width, height), outline=0, fill=0)
-    
     # Split the text into lines
     lines = text.split('\n')
-    line_height = 0
-
-    # Display each line
+    y = 0
+    
+    # Clear the display to a fresh slate if all lines cannot fit at once
+    if len(lines) * 8 > height:
+        draw.rectangle((0, 0, width, height), outline=0, fill=0)
+    
     for line in lines:
-        if line_height < height:
-            draw.text((0, line_height), line[:21], font=font, fill=255)
-            line_height += 8
-        else:
-            for i in range(8):
-                # Scroll by one pixel (1 line height)
+        # Calculate the width and height of the line to display
+        width, _ = draw.textsize(line, font=font)
+        
+        # Ensure the text fits within the OLED display
+        if width > disp.width:
+            # Scroll text if it's wider than the display
+            for i in range(width - disp.width):
+                draw.rectangle((0, 0, disp.width, disp.height), outline=0, fill=0)
+                draw.text((disp.width - i, y), line, font=font, fill=255)
                 disp.image(image)
                 disp.display()
-                time.sleep(0.1)
-                image = image.crop((0, 1, width, height))  # Crop the image to scroll up by 1 pixel
-                draw = ImageDraw.Draw(image)
-                draw.rectangle((0, height - 8, width, height), outline=0, fill=0)
-                draw.text((0, line_height - 8), line[:21], font=font, fill=255)
-                line_height -= 1
-
+                time.sleep(0.10)
+        else:
+            # Display text within the OLED's bounds
+            draw.text((0, y), line, font=font, fill=255)
+            y += 8
+    
     disp.image(image)
     disp.display()
 
