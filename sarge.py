@@ -61,14 +61,14 @@ class MicrophoneStream(object):
             yield b''.join(data)
 
 def print_toOled(text):
-    displayed = ""
-    for i in range(1, 6):
-        for j in range (0,7):
-            if j < len(text):
-                displayed += text[j]
-            else:
-                displayed += ' '  # Add a space if there's no character
-        oled.text(displayed, i)
+    for i in range(5):  # 5 lines on the OLED display
+        start_index = i * 20
+        end_index = start_index + 20
+        if start_index < len(text):
+            line_text = text[start_index:end_index]
+        else:
+            line_text = ''  # Leave the line empty if there's no more text
+        oled.text(line_text, i+1)  # OLED line numbers start from 1
 
     if isFull:
         time.sleep(2)
@@ -86,17 +86,12 @@ streamclient = RevAiStreamingClient(access_token, example_mc)
 with MicrophoneStream(rate, chunk) as stream:
     try:
         response_gen = streamclient.start(stream.generator())
-        full_transcript = ''
-
         for response in response_gen:
             response_json = json.loads(response)
             if response_json['type'] in ('final', 'partial'):
                 elements = response_json['elements']
                 transcript = ' '.join(elem['value'] for elem in elements if elem['type'] == 'text')
-                full_transcript += transcript
-                print(transcript)  # Print each chunk of transcription
-
-        censor_print(full_transcript)
+                print_toOled(transcript)
 
     except KeyboardInterrupt:
         streamclient.end()
