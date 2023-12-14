@@ -86,7 +86,7 @@ with MicrophoneStream(rate, chunk) as stream:
 
         for response in response_gen:
             response_json = json.loads(response)
-            if response_json['type'] in ('final','partial'):
+            if response_json['type'] in ('final', 'partial'):
                 elements = response_json['elements']
                 transcript = ' '.join(elem['value'] for elem in elements if elem['type'] == 'text')
                 full_transcript += transcript
