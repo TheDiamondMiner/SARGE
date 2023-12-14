@@ -3,9 +3,17 @@ from rev_ai.models import MediaConfig
 from rev_ai.streamingclient import RevAiStreamingClient
 from six.moves import queue
 import json
+from board import SCL, SDA
+import busio
+from oled_text import OledText
 
 # Replace 'YOUR_ACCESS_TOKEN' with your actual Rev.ai access token
 access_token = "02Xw3PNnMTiXAe5VENUQKJj3c5RVMMtap8iD8HhzLl0NzjOItgwr4UKTC96h0DFq6uLXSLqhAL0HUMvemhmbukGe6OnAQ"
+
+i2c = busio.I2C(SCL, SDA)
+oled = OledText(i2c, 128, 64)
+oled.auto_show = False
+isFull = False
 
 class MicrophoneStream(object):
     def __init__(self, rate, chunk):
@@ -52,25 +60,17 @@ class MicrophoneStream(object):
                     break
             yield b''.join(data)
 
-def censor_print(text):
-    # List of profane words (add more as needed)
-    profane_words = ["fuck", "motherfucker", "bitch", "bitchass","bitchassnigga","nigga"]
+def print_toOled(text):
+    displayed = ""
+    for i in range(1, 6):
+        for j in range (0,7):
+             displayed += text[j]
+        oled.text(displayed, i)
 
-    # Split the text into words
-    words = text.split()
-
-    # Iterate through each word
-    for i in range(len(words)):
-        # Check if the word is in the profane words list
-        if words[i].lower() in profane_words:
-            # Replace the word with asterisks
-            words[i] = '*'
-
-    # Join the words back into a string
-    censored_text = ' '.join(words)
-    
-    # Print the censored text
-    print(censored_text)
+    if isFull:
+        time.sleep(2)
+        
+    oled.show()
 
 
 # Configurations
