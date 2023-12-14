@@ -29,6 +29,27 @@ image = Image.new('1', (width, height))
 draw = ImageDraw.Draw(image)
 font = ImageFont.load_default()
 
+def display_text(text):
+    lines = text.split(' ')
+    line_count = 0
+    y = 0
+
+    for line in lines:
+        draw.text((0, y), line, font=font, fill=255)
+        line_count += 1
+        y += 10
+
+        if line_count == height//10:
+            disp.image(image)
+            disp.display()
+            time.sleep(2)
+            draw.rectangle((0,0,width,height), outline=0, fill=0)
+            line_count = 0
+            y = 0
+
+    disp.image(image)
+    disp.display()
+
 # Microphone stream class
 class MicrophoneStream(object):
     def __init__(self, rate, chunk):
@@ -75,40 +96,6 @@ class MicrophoneStream(object):
                     break
             yield b''.join(data)
 
-# Function to display text on OLED
-# Function to display text on OLED and scroll if needed
-def display_on_oled(text):
-    global disp, draw, image, width, height, font
-    
-    # Split the text into lines
-    lines = text.split('\n')
-    y = 0
-    
-    # Clear the display to a fresh slate if all lines cannot fit at once
-    if len(lines) * 8 > height:
-        draw.rectangle((0, 0, width, height), outline=0, fill=0)
-    
-    for line in lines:
-        # Calculate the width and height of the line to display
-        width, _ = draw.textsize(line, font=font)
-        
-        # Ensure the text fits within the OLED display
-        if width > disp.width:
-            # Scroll text if it's wider than the display
-            for i in range(width - disp.width):
-                draw.rectangle((0, 0, disp.width, disp.height), outline=0, fill=0)
-                draw.text((disp.width - i, y), line, font=font, fill=255)
-                disp.image(image)
-                disp.display()
-                time.sleep(0.10)
-        else:
-            # Display text within the OLED's bounds
-            draw.text((0, y), line, font=font, fill=255)
-            y += 8
-    
-    disp.image(image)
-    disp.display()
-
 
 # Rev.ai streaming client setup
 rate = 44100
@@ -128,7 +115,7 @@ with MicrophoneStream(rate, chunk) as stream:
                 elements = response_json['elements']
                 transcript = ' '.join(elem['value'] for elem in elements if elem['type'] == 'text')
                 full_transcript += transcript
-                display_on_oled(transcript)  # Display text on OLED
+                display_text(transcript)  # Display text on OLED
 
         # Clear the display after all lines are shown
         draw.rectangle((0, 0, width, height), outline=0, fill=0)
