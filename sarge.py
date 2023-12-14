@@ -12,7 +12,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 # Rev.ai access token
-access_token = "YOUR_ACCESS_TOKEN"
+access_token = "02Xw3PNnMTiXAe5VENUQKJj3c5RVMMtap8iD8HhzLl0NzjOItgwr4UKTC96h0DFq6uLXSLqhAL0HUMvemhmbukGe6OnAQ"
 
 # OLED display setup
 RST = None
