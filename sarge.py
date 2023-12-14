@@ -61,19 +61,30 @@ class MicrophoneStream(object):
             yield b''.join(data)
 
 def print_toOled(text):
-    for i in range(5):  # 5 lines on the OLED display
-        start_index = i * 20
-        end_index = start_index + 20
-        if start_index < len(text):
-            line_text = text[start_index:end_index]
+    words = text.split(' ')
+    lines = ['' for _ in range(5)]  # Initialize 5 lines for the OLED display
+    line_index = 0
+
+    for word in words:
+        # Check if the word will fit on the current line
+        if len(lines[line_index] + word) <= 20:
+            lines[line_index] += word + ' '
         else:
-            line_text = ''  # Leave the line empty if there's no more text
-        oled.text(line_text, i+1)  # OLED line numbers start from 1
+            if line_index < 4:  
+                line_index += 1
+                lines[line_index] += word + ' '  # Add the word to the new line
+            else:
+                # If there's no more room, stop adding words
+                break
+            
+    for i in range(5):
+        oled.text(lines[i], i+1)
 
     if isFull:
         time.sleep(2)
         
     oled.show()
+
 
 
 
