@@ -77,12 +77,23 @@ class MicrophoneStream(object):
 
 # Function to display text on OLED
 def display_on_oled(text):
-    draw.rectangle((0, 0, width, height), outline=0, fill=0)
-    lines = [text[i:i+21] for i in range(0, len(text), 21)]  # Split text into lines of 21 characters
+    global disp, draw, image, width, height, font
+    lines = [text[i:i + 21] for i in range(0, len(text), 21)]  # Split text into lines of 21 characters
     line_height = 0
+    line_count = 0
+
     for line in lines:
+        if line_count >= 4:
+            time.sleep(5)  # Wait for 5 seconds before continuing
+            line_count = 0
+            draw.rectangle((0, 0, width, height), outline=0, fill=0)
+            disp.image(image)
+            disp.display()
+
         draw.text((0, line_height), line, font=font, fill=255)
         line_height += 8  # Move to the next line
+        line_count += 1
+
     disp.image(image)
     disp.display()
 
