@@ -30,26 +30,26 @@ draw = ImageDraw.Draw(image)
 font = ImageFont.load_default()
 
 def display_text(text):
-    max_chars = width // 6  # Approximate width of a character
+    max_chars = 21  # Maximum characters in a line
     lines = [text[i:i+max_chars] for i in range(0, len(text), max_chars)]
-    line_count = 0
-    y = 0
+    line_height = 8  # Height of a line
+    max_lines = height // line_height  # Maximum lines that can fit on the display
 
-    for line in lines:
-        draw.text((0, y), line, font=font, fill=255)
-        line_count += 1
-        y += 10
+    for i in range(0, len(lines), max_lines):
+        draw.rectangle((0,0,width,height), outline=0, fill=0)  # Clear the display
 
-        if line_count == height // 10:
-            disp.image(image)
-            disp.display()
-            time.sleep(2)
-            draw.rectangle((0,0,width,height), outline=0, fill=0)
-            line_count = 0
-            y = 0
+        for j in range(max_lines):
+            if i + j < len(lines):
+                y = j * line_height  # Calculate y-coordinate for the current line
+                draw.text((0, y), lines[i + j], font=font, fill=255)
+
+        disp.image(image)
+        disp.display()
+        time.sleep(2)  # Wait for 2 seconds before updating the display
 
     disp.image(image)
     disp.display()
+
 
 
 # Microphone stream class
