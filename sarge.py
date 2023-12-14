@@ -64,13 +64,17 @@ def print_toOled(text):
     displayed = ""
     for i in range(1, 6):
         for j in range (0,7):
-             displayed += text[j]
+            if j < len(text):
+                displayed += text[j]
+            else:
+                displayed += ' '  # Add a space if there's no character
         oled.text(displayed, i)
 
     if isFull:
         time.sleep(2)
         
     oled.show()
+
 
 
 # Configurations
