@@ -76,23 +76,37 @@ class MicrophoneStream(object):
             yield b''.join(data)
 
 # Function to display text on OLED
+# Function to display text on OLED and scroll if needed
 def display_on_oled(text):
     global disp, draw, image, width, height, font
+    
+    # Clear the display
     draw.rectangle((0, 0, width, height), outline=0, fill=0)
-
-    lines = text.split('\n')  # Split text into lines
+    
+    # Split the text into lines
+    lines = text.split('\n')
     line_height = 0
 
+    # Display each line
     for line in lines:
-        if line_height >= height:
-            draw.rectangle((0, 0, width, height), outline=0, fill=0)
-            line_height = 0
-
-        draw.text((0, line_height), line[:21], font=font, fill=255)  # Display first 21 characters of each line
-        line_height += 8  # Move to the next line
+        if line_height < height:
+            draw.text((0, line_height), line[:21], font=font, fill=255)
+            line_height += 8
+        else:
+            for i in range(8):
+                # Scroll by one pixel (1 line height)
+                disp.image(image)
+                disp.display()
+                time.sleep(0.1)
+                image = image.crop((0, 1, width, height))  # Crop the image to scroll up by 1 pixel
+                draw = ImageDraw.Draw(image)
+                draw.rectangle((0, height - 8, width, height), outline=0, fill=0)
+                draw.text((0, line_height - 8), line[:21], font=font, fill=255)
+                line_height -= 1
 
     disp.image(image)
     disp.display()
+
 
 # Rev.ai streaming client setup
 rate = 44100
