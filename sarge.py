@@ -3,33 +3,9 @@ from rev_ai.models import MediaConfig
 from rev_ai.streamingclient import RevAiStreamingClient
 from six.moves import queue
 import json
-from luma.core.interface.serial import i2c
-from luma.oled.device import ssd1306
-from luma.core.virtual import viewport
-from luma.core.render import canvas
-from PIL import ImageFont
-import time
 
 # Replace 'YOUR_ACCESS_TOKEN' with your actual Rev.ai access token
 access_token = "02TAiLcp-j1gkC-5waYgDkzPXvv3IYhQ4D7gO2v2CFlQtMoMl4bkPsw7WFWxr3fT_3GoCVLmD-PF4ln4GoRPrBxvF5rNU"
-
-# OLED display setup
-serial = i2c(port=1, address=0x3C)
-device = ssd1306(serial)
-virtual = viewport(device, width=device.width, height=device.height)
-
-def display_text_on_oled(text):
-    with canvas(virtual) as draw:
-        font = ImageFont.load_default()
-        lines = virtual.text(text, (0, 0), font=font, fill="white")
-
-        # Scroll text if it's longer than the display height
-        if lines > device.height:
-            for i in range(lines - device.height):
-                virtual.set_position((0, -i))
-                time.sleep(0.1)  # Adjust scroll speed as needed
-        else:
-            time.sleep(5)  # Display for 5 seconds if it fits entirely
 
 class MicrophoneStream(object):
     def __init__(self, rate, chunk):
@@ -76,6 +52,27 @@ class MicrophoneStream(object):
                     break
             yield b''.join(data)
 
+def censor_print(text):
+    # List of profane words (add more as needed)
+    profane_words = ["fuck", "motherfucker", "bitch", "bitchass","bitchassnigga","nigga"]
+
+    # Split the text into words
+    words = text.split()
+
+    # Iterate through each word
+    for i in range(len(words)):
+        # Check if the word is in the profane words list
+        if words[i].lower() in profane_words:
+            # Replace the word with asterisks
+            words[i] = '*'
+
+    # Join the words back into a string
+    censored_text = ' '.join(words)
+    
+    # Print the censored text
+    print(censored_text)
+
+
 # Configurations
 rate = 44100
 chunk = int(rate / 10)
@@ -93,7 +90,10 @@ with MicrophoneStream(rate, chunk) as stream:
                 elements = response_json['elements']
                 transcript = ' '.join(elem['value'] for elem in elements if elem['type'] == 'text')
                 full_transcript += transcript
-                display_text_on_oled(transcript)  # Display text on OLED
+                print(transcript)  # Print each chunk of transcription
+
+        censor_print(full_transcript)
 
     except KeyboardInterrupt:
         streamclient.end()
+        pass
