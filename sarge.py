@@ -5,7 +5,7 @@ from six.moves import queue
 import json
 
 # Replace 'YOUR_ACCESS_TOKEN' with your actual Rev.ai access token
-access_token = "02TAiLcp-j1gkC-5waYgDkzPXvv3IYhQ4D7gO2v2CFlQtMoMl4bkPsw7WFWxr3fT_3GoCVLmD-PF4ln4GoRPrBxvF5rNU"
+access_token = "02Xw3PNnMTiXAe5VENUQKJj3c5RVMMtap8iD8HhzLl0NzjOItgwr4UKTC96h0DFq6uLXSLqhAL0HUMvemhmbukGe6OnAQ"
 
 class MicrophoneStream(object):
     def __init__(self, rate, chunk):
