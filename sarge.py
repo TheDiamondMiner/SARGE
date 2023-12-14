@@ -30,7 +30,8 @@ draw = ImageDraw.Draw(image)
 font = ImageFont.load_default()
 
 def display_text(text):
-    lines = text.split(' ')
+    max_chars = width // 6  # Approximate width of a character
+    lines = [text[i:i+max_chars] for i in range(0, len(text), max_chars)]
     line_count = 0
     y = 0
 
@@ -39,7 +40,7 @@ def display_text(text):
         line_count += 1
         y += 10
 
-        if line_count == height//10:
+        if line_count == height // 10:
             disp.image(image)
             disp.display()
             time.sleep(2)
@@ -49,6 +50,7 @@ def display_text(text):
 
     disp.image(image)
     disp.display()
+
 
 # Microphone stream class
 class MicrophoneStream(object):
