@@ -1,50 +1,19 @@
 import pyaudio
-import csv
-import json
-from six.moves import queue
-import busio
 from rev_ai.models import MediaConfig
 from rev_ai.streamingclient import RevAiStreamingClient
+from six.moves import queue
+import json
 from board import SCL, SDA
+import busio
 from oled_text import OledText
 
-access_token = ""
+# Replace 'YOUR_ACCESS_TOKEN' with your actual Rev.ai access token
+access_token = "021i7T-r-xEixARxGLfFSd_1FbZsCu8RMht8cY7_9NXAPbbTbLfMSHS3avogUKsbFz50J3aIheZ7oTtsldu1cmZvjqpoE"
 
 i2c = busio.I2C(SCL, SDA)
 oled = OledText(i2c, 128, 64)
 oled.auto_show = False
 isFull = False
-
-file_path = '/home/mom/SARGE/auth.csv'
-
-def ReadCSVFile(path):
-    with open(path, 'r') as file:
-        data_line = file.readline().strip()
-    return data_line.split(',')
-
-def GetAccessTokenFromCSV():
-    csvData = ReadCSVFile(file_path)
-    authTokens = csvData[1:]
-    lastIndex = int(csvData[0])
-    
-    if lastIndex < 3:
-        currentIndex = lastIndex + 1
-    else: #incase of 4 we want to reset back to -1
-        lastIndex = -1
-        
-    access_token = authTokens[currentIndex]
-    UpdateLastReadIndex(file_path,currentIndex)
-    
-def UpdateLastReadIndex(path, new_last_read_index):
-    with open(path, 'r') as file:
-        lines = file.readlines()
-
-    lines[0] = str(new_last_read_index) + ',' + ','.join(lines[0].split(',')[1:])
-
-    with open(path, 'w') as file:
-        file.writelines(lines)
-
-GetAccessTokenFromCSV()
 
 class MicrophoneStream(object):
     def __init__(self, rate, chunk):
