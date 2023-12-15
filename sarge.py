@@ -15,7 +15,7 @@ oled = OledText(i2c, 128, 64)
 oled.auto_show = False
 isFull = False
 
-file_path = 'auth.csv'
+file_path = '/home/mom/SARGE/auth.csv'
 
 def ReadCSVFile(path):
     with open(path, 'r') as file:
